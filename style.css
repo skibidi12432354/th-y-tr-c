@@ -1,50 +1,241 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f8ff;
-  padding: 20px;
-  text-align: center;
-}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bảng Thông Tin Học Sinh</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      padding: 20px;
+      text-align: center;
+    }
 
-h2 {
-  color: #2a4d69;
-}
+    h2 {
+      color: #2a4d69;
+    }
 
-input, select {
-  padding: 8px;
-  font-size: 16px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  border: 1px solid #aaa;
-}
+    input, select {
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+    }
 
-button {
-  padding: 8px 14px;
-  font-size: 16px;
-  background-color: #2a9d8f;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+    button {
+      padding: 8px 14px;
+      font-size: 16px;
+      background-color: #2a9d8f;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
 
-button:hover {
-  background-color: #21867a;
-}
+    button:hover {
+      background-color: #21867a;
+    }
 
-table {
-  margin: 20px auto;
-  border-collapse: collapse;
-  width: 95%;
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 95%;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
 
-th, td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: center;
-}
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
 
-th {
-  background-color: #f1f1f1;
-}
+    th {
+      background-color: #f1f1f1;
+    }
+
+    /* Để input trong bảng trông đồng bộ */
+    td input, td select {
+      width: 90%;
+      padding: 6px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <h2>Bảng Thông Tin Học Sinh</h2>
+
+  <input type="text" id="nameInput" placeholder="Nhập tên để tìm hoặc thêm..." />
+  <button onclick="searchInfo()">Tìm</button>
+  <button onclick="showAddForm()">Thêm mới</button>
+
+  <table id="infoTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Tên</th>
+        <th>Tuổi</th>
+        <th>Lớp</th>
+        <th>Trường</th>
+        <th>Đóng học phí</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <script>
+    let data = [
+      { name: "6.1-01 Anh", age: 11, class: "6.1", address: "THCS Nguyễn Trãi", hocphi: "Có" },
+      { name: "6.1-02 An", age: 11, class: "6.1", address: "THCS Hùng Vương", hocphi: "Không" },
+      { name: "6.2-01 Khang", age: 12, class: "6.2", address: "THCS Nguyễn Du", hocphi: "Có" }
+    ];
+
+    let editingIndex = -1;
+
+    function renderTable() {
+      const body = document.getElementById("tableBody");
+      const table = document.getElementById("infoTable");
+      if (data.length === 0) {
+        body.innerHTML = '<tr><td colspan="6">Không có dữ liệu</td></tr>';
+        table.style.display = "table";
+        return;
+      }
+      table.style.display = "table";
+      body.innerHTML = data.map((person, i) => `
+        <tr>
+          <td>${person.name}</td>
+          <td>${person.age}</td>
+          <td>${person.class}</td>
+          <td>${person.address}</td>
+          <td>${person.hocphi}</td>
+          <td>
+            <button onclick="editRow(${i})">Sửa</button>
+            <button onclick="deleteRow(${i})" style="background-color:#e63946;">Xóa</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function searchInfo() {
+      const input = document.getElementById("nameInput").value.trim().toLowerCase();
+      const table = document.getElementById("infoTable");
+      const body = document.getElementById("tableBody");
+      if (!input) {
+        alert("Vui lòng nhập tên để tìm.");
+        return;
+      }
+      const results = data.filter(p => p.name.toLowerCase().includes(input));
+      if (results.length === 0) {
+        alert("Không tìm thấy người này.");
+        table.style.display = "none";
+        return;
+      }
+      table.style.display = "table";
+      body.innerHTML = results.map(person => {
+        const index = data.indexOf(person);
+        return `
+          <tr>
+            <td>${person.name}</td>
+            <td>${person.age}</td>
+            <td>${person.class}</td>
+            <td>${person.address}</td>
+            <td>${person.hocphi}</td>
+            <td>
+              <button onclick="editRow(${index})">Sửa</button>
+              <button onclick="deleteRow(${index})" style="background-color:#e63946;">Xóa</button>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    function showAddForm() {
+      editingIndex = -1;
+      const body = document.getElementById("tableBody");
+      const table = document.getElementById("infoTable");
+      table.style.display = "table";
+      body.innerHTML = `
+        <tr>
+          <td><input id="inpName" placeholder="Tên" /></td>
+          <td><input id="inpAge" type="number" placeholder="Tuổi" /></td>
+          <td><input id="inpClass" placeholder="Lớp" /></td>
+          <td><input id="inpAddress" placeholder="Trường" /></td>
+          <td>
+            <select id="inpHocphi">
+              <option value="Có">Có</option>
+              <option value="Không">Không</option>
+            </select>
+          </td>
+          <td>
+            <button onclick="saveRow()">Lưu</button>
+            <button onclick="renderTable()">Hủy</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    function editRow(index) {
+      editingIndex = index;
+      const person = data[index];
+      const body = document.getElementById("tableBody");
+      const table = document.getElementById("infoTable");
+      table.style.display = "table";
+      body.innerHTML = `
+        <tr>
+          <td><input id="inpName" value="${person.name}" /></td>
+          <td><input id="inpAge" type="number" value="${person.age}" /></td>
+          <td><input id="inpClass" value="${person.class}" /></td>
+          <td><input id="inpAddress" value="${person.address}" /></td>
+          <td>
+            <select id="inpHocphi">
+              <option value="Có" ${person.hocphi === "Có" ? "selected" : ""}>Có</option>
+              <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
+            </select>
+          </td>
+          <td>
+            <button onclick="saveRow()">Lưu</button>
+            <button onclick="renderTable()">Hủy</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    function saveRow() {
+      const name = document.getElementById("inpName").value.trim();
+      const age = parseInt(document.getElementById("inpAge").value);
+      const className = document.getElementById("inpClass").value.trim();
+      const address = document.getElementById("inpAddress").value.trim();
+      const hocphi = document.getElementById("inpHocphi").value;
+
+      if (!name || !age || !className || !address) {
+        alert("Vui lòng điền đầy đủ thông tin.");
+        return;
+      }
+
+      const newPerson = { name, age, class: className, address, hocphi };
+
+      if (editingIndex === -1) {
+        data.push(newPerson);
+      } else {
+        data[editingIndex] = newPerson;
+        editingIndex = -1;
+      }
+
+      renderTable();
+    }
+
+    function deleteRow(index) {
+      if (confirm(`Bạn có chắc muốn xóa "${data[index].name}" không?`)) {
+        data.splice(index, 1);
+        renderTable();
+      }
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
