@@ -94,7 +94,7 @@
   </div>
 
   <div class="tables-wrapper" id="tablesContainer">
-    <!-- Hai bảng hiện ở đây -->
+    <!-- Hai bảng sẽ hiện ở đây -->
   </div>
 
   <script>
@@ -109,8 +109,10 @@
 
     function groupByClass(filteredData) {
       const groups = {};
-      filteredData.forEach(person => {
-        if (!groups[person.class]) groups[person.class] = [];
+      filteredData.forEach((person) => {
+        if(!groups[person.class]) {
+          groups[person.class] = [];
+        }
         groups[person.class].push(person);
       });
       return groups;
@@ -121,15 +123,18 @@
       container.innerHTML = "";
 
       const filteredData = data
-        .map((person, idx) => ({ ...person, originalIndex: idx }))
+        .map((person, idx) => ({...person, originalIndex: idx}))
         .filter(person => person.name.toLowerCase().includes(filter.toLowerCase()));
 
-      if (filteredData.length === 0) {
+      if(filteredData.length === 0){
         container.innerHTML = `<p>Không có dữ liệu phù hợp</p>`;
         return;
       }
 
       const grouped = groupByClass(filteredData);
+
+      // Lấy danh sách lớp 6.1 và 6.2 hoặc các lớp khác nếu có
+      // Để đảm bảo 2 cột, ta chỉ hiển thị 2 lớp: 6.1 và 6.2, còn lớp khác bỏ qua (bạn có thể mở rộng)
       const class1 = "6.1";
       const class2 = "6.2";
 
@@ -176,8 +181,8 @@
     function renderRows(personList, className) {
       let rows = "";
       personList.forEach(person => {
-        const idx = data.findIndex(p => p.name === person.name);
-        if (editingIndex === idx && !addingNew) {
+        const idx = data.findIndex(p => p.name === person.name); // tìm index trong data gốc
+        if(editingIndex === idx && !addingNew) {
           rows += `
             <tr>
               <td><input id="editName" value="${person.name}" /></td>
@@ -213,7 +218,8 @@
         }
       });
 
-      if (addingNew && className === "6.1") {
+      // Nếu đang thêm mới và lớp này là 6.1 thì thêm dòng nhập thêm mới ở đây (bạn muốn thêm bên nào thì chỉnh)
+      if(addingNew && className === "6.1") {
         rows += `
           <tr>
             <td><input id="addName" placeholder="Tên" /></td>
@@ -275,48 +281,4 @@
         hocphi: newHocphi
       };
       editingIndex = -1;
-      renderTable(document.getElementById("nameInput").value.trim());
-    }
-
-    function deleteRow(index) {
-      if (confirm("Bạn có chắc muốn xóa học sinh này?")) {
-        data.splice(index, 1);
-        renderTable(document.getElementById("nameInput").value.trim());
-      }
-    }
-
-    function showAddForm() {
-      if (!addingNew) {
-        addingNew = true;
-        editingIndex = -1;
-        renderTable(document.getElementById("nameInput").value.trim());
-      }
-    }
-
-    function addNewRow() {
-      const name = document.getElementById("addName").value.trim();
-      const age = parseInt(document.getElementById("addAge").value);
-      const className = document.getElementById("addClass").value.trim();
-      const address = document.getElementById("addAddress").value.trim();
-      const hocphi = document.getElementById("addHocphi").value;
-
-      if (!name || isNaN(age) || !className || !address) {
-        alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
-        return;
-      }
-
-      data.push({ name, age, class: className, address, hocphi });
-      addingNew = false;
-      renderTable(document.getElementById("nameInput").value.trim());
-    }
-
-    function cancelAdd() {
-      addingNew = false;
-      renderTable(document.getElementById("nameInput").value.trim());
-    }
-
-    // Khởi tạo bảng lần đầu
-    renderTable();
-  </script>
-</body>
-</html>
+      render
