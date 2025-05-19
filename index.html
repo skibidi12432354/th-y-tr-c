@@ -39,7 +39,7 @@
     }
 
     table {
-      margin: 20px auto;
+      margin: 20px auto 40px auto;
       border-collapse: collapse;
       width: 95%;
       background-color: white;
@@ -64,6 +64,13 @@
       border: 1px solid #aaa;
       box-sizing: border-box;
     }
+
+    .group-title {
+      margin-top: 40px;
+      color: #2a4d69;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
   </style>
 </head>
 <body>
@@ -80,21 +87,9 @@
     <button type="button" onclick="showAddForm()">Thêm mới</button>
   </div>
 
-  <table id="infoTable" aria-live="polite" aria-label="Bảng thông tin học sinh">
-    <thead>
-      <tr>
-        <th>Tên</th>
-        <th>Tuổi</th>
-        <th>Lớp</th>
-        <th>Trường</th>
-        <th>Đóng học phí</th>
-        <th>Hành động</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      <!-- Dữ liệu sẽ hiện ra ở đây -->
-    </tbody>
-  </table>
+  <div id="tablesContainer">
+    <!-- Bảng các nhóm sẽ hiện ở đây -->
+  </div>
 
   <script>
     const data = [
@@ -106,74 +101,115 @@
     let editingIndex = -1;
     let addingNew = false;
 
-    function renderTable(filter = "") {
-      const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = "";
+    function groupByClass(filteredData) {
+      const groups = {};
+      filteredData.forEach((person) => {
+        if(!groups[person.class]) {
+          groups[person.class] = [];
+        }
+        groups[person.class].push(person);
+      });
+      return groups;
+    }
 
-      const filteredData = data.filter(person =>
-        person.name.toLowerCase().includes(filter.toLowerCase())
-      );
+    function renderTable(filter = "") {
+      const container = document.getElementById("tablesContainer");
+      container.innerHTML = "";
+
+      const filteredData = data
+        .map((person, idx) => ({...person, originalIndex: idx}))
+        .filter(person => person.name.toLowerCase().includes(filter.toLowerCase()));
 
       if(filteredData.length === 0){
-        tbody.innerHTML = `<tr><td colspan="6">Không có dữ liệu phù hợp</td></tr>`;
+        container.innerHTML = `<p>Không có dữ liệu phù hợp</p>`;
         return;
       }
 
-      filteredData.forEach((person, index) => {
-        if(editingIndex === index && !addingNew){
-          tbody.innerHTML += `
+      const grouped = groupByClass(filteredData);
+
+      for (const className in grouped) {
+        container.innerHTML += `<div class="group-title">Lớp ${className}</div>`;
+
+        let tbodyHTML = "";
+
+        grouped[className].forEach(person => {
+          if(editingIndex === person.originalIndex && !addingNew) {
+            tbodyHTML += `
+              <tr>
+                <td><input id="editName" value="${person.name}" /></td>
+                <td><input id="editAge" type="number" value="${person.age}" /></td>
+                <td><input id="editClass" value="${person.class}" /></td>
+                <td><input id="editAddress" value="${person.address}" /></td>
+                <td>
+                  <select id="editHocphi">
+                    <option value="Có" ${person.hocphi === "Có" ? "selected" : ""}>Có</option>
+                    <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
+                  </select>
+                </td>
+                <td>
+                  <button onclick="saveEdit(${person.originalIndex})">Lưu</button>
+                  <button onclick="cancelEdit()">Hủy</button>
+                </td>
+              </tr>
+            `;
+          } else {
+            tbodyHTML += `
+              <tr>
+                <td>${person.name}</td>
+                <td>${person.age}</td>
+                <td>${person.class}</td>
+                <td>${person.address}</td>
+                <td>${person.hocphi}</td>
+                <td>
+                  <button onclick="startEdit(${person.originalIndex})">Chỉnh sửa</button>
+                  <button onclick="deleteRow(${person.originalIndex})">Xóa</button>
+                </td>
+              </tr>
+            `;
+          }
+        });
+
+        // Nếu đang thêm mới và đang nhóm đầu tiên, thêm form thêm mới luôn
+        if(addingNew) {
+          tbodyHTML += `
             <tr>
-              <td><input id="editName" value="${person.name}" /></td>
-              <td><input id="editAge" type="number" value="${person.age}" /></td>
-              <td><input id="editClass" value="${person.class}" /></td>
-              <td><input id="editAddress" value="${person.address}" /></td>
+              <td><input id="addName" placeholder="Tên" /></td>
+              <td><input id="addAge" type="number" placeholder="Tuổi" /></td>
+              <td><input id="addClass" placeholder="Lớp" /></td>
+              <td><input id="addAddress" placeholder="Trường" /></td>
               <td>
-                <select id="editHocphi">
-                  <option value="Có" ${person.hocphi === "Có" ? "selected" : ""}>Có</option>
-                  <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
+                <select id="addHocphi">
+                  <option value="Có">Có</option>
+                  <option value="Không">Không</option>
                 </select>
               </td>
               <td>
-                <button onclick="saveEdit(${index})">Lưu</button>
-                <button onclick="cancelEdit()">Hủy</button>
+                <button onclick="addNewRow()">Thêm</button>
+                <button onclick="cancelAdd()">Hủy</button>
               </td>
             </tr>
           `;
-        } else {
-          tbody.innerHTML += `
-            <tr>
-              <td>${person.name}</td>
-              <td>${person.age}</td>
-              <td>${person.class}</td>
-              <td>${person.address}</td>
-              <td>${person.hocphi}</td>
-              <td>
-                <button onclick="startEdit(${index})">Chỉnh sửa</button>
-                <button onclick="deleteRow(${index})">Xóa</button>
-              </td>
-            </tr>
-          `;
+          // chỉ thêm 1 lần cho nhóm đầu tiên nên sau khi thêm xong tắt flag
+          // (hoặc có thể thay đổi tùy ý)
+          // addingNew = false;
         }
-      });
 
-      if(addingNew){
-        tbody.innerHTML += `
-          <tr>
-            <td><input id="addName" placeholder="Tên" /></td>
-            <td><input id="addAge" type="number" placeholder="Tuổi" /></td>
-            <td><input id="addClass" placeholder="Lớp" /></td>
-            <td><input id="addAddress" placeholder="Trường" /></td>
-            <td>
-              <select id="addHocphi">
-                <option value="Có">Có</option>
-                <option value="Không">Không</option>
-              </select>
-            </td>
-            <td>
-              <button onclick="addNewRow()">Thêm</button>
-              <button onclick="cancelAdd()">Hủy</button>
-            </td>
-          </tr>
+        container.innerHTML += `
+          <table aria-live="polite" aria-label="Bảng lớp ${className}">
+            <thead>
+              <tr>
+                <th>Tên</th>
+                <th>Tuổi</th>
+                <th>Lớp</th>
+                <th>Trường</th>
+                <th>Đóng học phí</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tbodyHTML}
+            </tbody>
+          </table>
         `;
       }
     }
@@ -232,6 +268,11 @@
       renderTable(document.getElementById("nameInput").value.trim());
     }
 
+    function cancelAdd() {
+      addingNew = false;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
+
     function addNewRow() {
       const newName = document.getElementById("addName").value.trim();
       const newAge = parseInt(document.getElementById("addAge").value);
@@ -253,11 +294,10 @@
       });
 
       addingNew = false;
-      document.getElementById("nameInput").value = "";
-      renderTable();
+      renderTable(document.getElementById("nameInput").value.trim());
     }
 
-    // Hiển thị bảng khi mở trang
+    // Khởi tạo bảng lúc đầu
     renderTable();
   </script>
 </body>
