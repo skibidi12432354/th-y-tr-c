@@ -1,219 +1,324 @@
-const data = [
-  { name: "6.1-01 Anh", age: 11, class: "6.1", address: "THCS Nguyễn Trãi", hocphi: "Có" },
-  { name: "6.1-02 An", age: 11, class: "6.1", address: "THCS Hùng Vương", hocphi: "Không" },
-  { name: "6.2-01 Khang", age: 12, class: "6.2", address: "THCS Nguyễn Du", hocphi: "Có" }
-];
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bảng Thông Tin Học Sinh</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      padding: 20px;
+      text-align: center;
+    }
 
-let editingIndex = -1;
-let addingNew = false;
+    h2 {
+      color: #2a4d69;
+    }
 
-function groupByClass(filteredData) {
-  const groups = {};
-  filteredData.forEach(person => {
-    if (!groups[person.class]) groups[person.class] = [];
-    groups[person.class].push(person);
-  });
-  return groups;
-}
+    input, select {
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+    }
 
-function renderTable(filter = "") {
-  const container = document.getElementById("tablesContainer");
-  container.innerHTML = "";
+    button {
+      padding: 8px 14px;
+      font-size: 16px;
+      background-color: #2a9d8f;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
 
-  const filteredData = data
-    .map((person, idx) => ({ ...person, originalIndex: idx }))
-    .filter(person => person.name.toLowerCase().includes(filter.toLowerCase()));
+    button:hover {
+      background-color: #21867a;
+    }
 
-  if (filteredData.length === 0) {
-    container.innerHTML = `<p>Không có dữ liệu phù hợp</p>`;
-    return;
-  }
+    .tables-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 20px;
+    }
 
-  const grouped = groupByClass(filteredData);
-  const class1 = "6.1";
-  const class2 = "6.2";
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 600px;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin: 0 auto;
+    }
 
-  container.innerHTML = `
-    <div>
-      <div class="group-title">Lớp ${class1}</div>
-      <table aria-live="polite" aria-label="Bảng lớp ${class1}">
-        <thead>
-          <tr>
-            <th>Tên</th>
-            <th>Tuổi</th>
-            <th>Lớp</th>
-            <th>Trường</th>
-            <th>Đóng học phí</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${renderRows(grouped[class1] || [], class1)}
-        </tbody>
-      </table>
-    </div>
-    <div>
-      <div class="group-title">Lớp ${class2}</div>
-      <table aria-live="polite" aria-label="Bảng lớp ${class2}">
-        <thead>
-          <tr>
-            <th>Tên</th>
-            <th>Tuổi</th>
-            <th>Lớp</th>
-            <th>Trường</th>
-            <th>Đóng học phí</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${renderRows(grouped[class2] || [], class2)}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
 
-function renderRows(personList, className) {
-  let rows = "";
-  personList.forEach(person => {
-    const idx = data.findIndex(p => p.name === person.name);
-    if (editingIndex === idx && !addingNew) {
-      rows += `
-        <tr>
-          <td><input id="editName" value="${person.name}" /></td>
-          <td><input id="editAge" type="number" value="${person.age}" /></td>
-          <td><input id="editClass" value="${person.class}" /></td>
-          <td><input id="editAddress" value="${person.address}" /></td>
-          <td>
-            <select id="editHocphi">
-              <option value="Có" ${person.hocphi === "Có" ? "selected" : ""}>Có</option>
-              <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
-            </select>
-          </td>
-          <td>
-            <button onclick="saveEdit(${idx})">Lưu</button>
-            <button onclick="cancelEdit()">Hủy</button>
-          </td>
-        </tr>
-      `;
-    } else {
-      rows += `
-        <tr>
-          <td>${person.name}</td>
-          <td>${person.age}</td>
-          <td>${person.class}</td>
-          <td>${person.address}</td>
-          <td>${person.hocphi}</td>
-          <td>
-            <button onclick="startEdit(${idx})">Chỉnh sửa</button>
-            <button onclick="deleteRow(${idx})">Xóa</button>
-          </td>
-        </tr>
+    th {
+      background-color: #f1f1f1;
+    }
+
+    td input, td select {
+      width: 90%;
+      padding: 6px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+      box-sizing: border-box;
+    }
+
+    .group-title {
+      color: #2a4d69;
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Bảng Thông Tin Học Sinh</h2>
+
+  <div>
+    <input
+      type="text"
+      id="nameInput"
+      placeholder="Nhập tên để tìm hoặc thêm..."
+      aria-label="Tên học sinh"
+      oninput="filterTable()"
+    />
+    <button type="button" onclick="showAddForm()">Thêm mới</button>
+  </div>
+
+  <div class="tables-wrapper" id="tablesContainer">
+    <!-- Hai bảng hiện ở đây -->
+  </div>
+
+  <script>
+    const data = [
+      { name: "6.1-01 Anh", age: 11, class: "6.1", address: "THCS Nguyễn Trãi", hocphi: "Có" },
+      { name: "6.1-02 An", age: 11, class: "6.1", address: "THCS Hùng Vương", hocphi: "Không" },
+      { name: "6.2-01 Khang", age: 12, class: "6.2", address: "THCS Nguyễn Du", hocphi: "Có" }
+    ];
+
+    let editingIndex = -1;
+    let addingNew = false;
+
+    function groupByClass(filteredData) {
+      const groups = {};
+      filteredData.forEach(person => {
+        if (!groups[person.class]) groups[person.class] = [];
+        groups[person.class].push(person);
+      });
+      return groups;
+    }
+
+    function renderTable(filter = "") {
+      const container = document.getElementById("tablesContainer");
+      container.innerHTML = "";
+
+      const filteredData = data
+        .map((person, idx) => ({ ...person, originalIndex: idx }))
+        .filter(person => person.name.toLowerCase().includes(filter.toLowerCase()));
+
+      if (filteredData.length === 0) {
+        container.innerHTML = `<p>Không có dữ liệu phù hợp</p>`;
+        return;
+      }
+
+      const grouped = groupByClass(filteredData);
+      const class1 = "6.1";
+      const class2 = "6.2";
+
+      container.innerHTML = `
+        <div>
+          <div class="group-title">Lớp ${class1}</div>
+          <table aria-live="polite" aria-label="Bảng lớp ${class1}">
+            <thead>
+              <tr>
+                <th>Tên</th>
+                <th>Tuổi</th>
+                <th>Lớp</th>
+                <th>Trường</th>
+                <th>Đóng học phí</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${renderRows(grouped[class1] || [], class1)}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="group-title">Lớp ${class2}</div>
+          <table aria-live="polite" aria-label="Bảng lớp ${class2}">
+            <thead>
+              <tr>
+                <th>Tên</th>
+                <th>Tuổi</th>
+                <th>Lớp</th>
+                <th>Trường</th>
+                <th>Đóng học phí</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${renderRows(grouped[class2] || [], class2)}
+            </tbody>
+          </table>
+        </div>
       `;
     }
-  });
 
-  if (addingNew && className === "6.1") {
-    rows += `
-      <tr>
-        <td><input id="addName" placeholder="Tên" /></td>
-        <td><input id="addAge" type="number" placeholder="Tuổi" /></td>
-        <td><input id="addClass" placeholder="Lớp" /></td>
-        <td><input id="addAddress" placeholder="Trường" /></td>
-        <td>
-          <select id="addHocphi">
-            <option value="Có">Có</option>
-            <option value="Không">Không</option>
-          </select>
-        </td>
-        <td>
-          <button onclick="addNewRow()">Thêm</button>
-          <button onclick="cancelAdd()">Hủy</button>
-        </td>
-      </tr>
-    `;
-  }
+    function renderRows(personList, className) {
+      let rows = "";
+      personList.forEach(person => {
+        const idx = data.findIndex(p => p.name === person.name);
+        if (editingIndex === idx && !addingNew) {
+          rows += `
+            <tr>
+              <td><input id="editName" value="${person.name}" /></td>
+              <td><input id="editAge" type="number" value="${person.age}" /></td>
+              <td><input id="editClass" value="${person.class}" /></td>
+              <td><input id="editAddress" value="${person.address}" /></td>
+              <td>
+                <select id="editHocphi">
+                  <option value="Có" ${person.hocphi === "Có" ? "selected" : ""}>Có</option>
+                  <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
+                </select>
+              </td>
+              <td>
+                <button onclick="saveEdit(${idx})">Lưu</button>
+                <button onclick="cancelEdit()">Hủy</button>
+              </td>
+            </tr>
+          `;
+        } else {
+          rows += `
+            <tr>
+              <td>${person.name}</td>
+              <td>${person.age}</td>
+              <td>${person.class}</td>
+              <td>${person.address}</td>
+              <td>${person.hocphi}</td>
+              <td>
+                <button onclick="startEdit(${idx})">Chỉnh sửa</button>
+                <button onclick="deleteRow(${idx})">Xóa</button>
+              </td>
+            </tr>
+          `;
+        }
+      });
 
-  return rows;
-}
+      if (addingNew && className === "6.1") {
+        rows += `
+          <tr>
+            <td><input id="addName" placeholder="Tên" /></td>
+            <td><input id="addAge" type="number" placeholder="Tuổi" /></td>
+            <td><input id="addClass" placeholder="Lớp" /></td>
+            <td><input id="addAddress" placeholder="Trường" /></td>
+            <td>
+              <select id="addHocphi">
+                <option value="Có">Có</option>
+                <option value="Không">Không</option>
+              </select>
+            </td>
+            <td>
+              <button onclick="addNewRow()">Thêm</button>
+              <button onclick="cancelAdd()">Hủy</button>
+            </td>
+          </tr>
+        `;
+      }
 
-function filterTable() {
-  const filterText = document.getElementById("nameInput").value.trim();
-  editingIndex = -1;
-  addingNew = false;
-  renderTable(filterText);
-}
+      return rows;
+    }
 
-function startEdit(index) {
-  editingIndex = index;
-  addingNew = false;
-  renderTable(document.getElementById("nameInput").value.trim());
-}
+    function filterTable() {
+      const filterText = document.getElementById("nameInput").value.trim();
+      editingIndex = -1;
+      addingNew = false;
+      renderTable(filterText);
+    }
 
-function cancelEdit() {
-  editingIndex = -1;
-  renderTable(document.getElementById("nameInput").value.trim());
-}
+    function startEdit(index) {
+      editingIndex = index;
+      addingNew = false;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
 
-function saveEdit(index) {
-  const newName = document.getElementById("editName").value.trim();
-  const newAge = parseInt(document.getElementById("editAge").value);
-  const newClass = document.getElementById("editClass").value.trim();
-  const newAddress = document.getElementById("editAddress").value.trim();
-  const newHocphi = document.getElementById("editHocphi").value;
+    function cancelEdit() {
+      editingIndex = -1;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
 
-  if (!newName || isNaN(newAge) || !newClass || !newAddress) {
-    alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
-    return;
-  }
+    function saveEdit(index) {
+      const newName = document.getElementById("editName").value.trim();
+      const newAge = parseInt(document.getElementById("editAge").value);
+      const newClass = document.getElementById("editClass").value.trim();
+      const newAddress = document.getElementById("editAddress").value.trim();
+      const newHocphi = document.getElementById("editHocphi").value;
 
-  data[index] = {
-    name: newName,
-    age: newAge,
-    class: newClass,
-    address: newAddress,
-    hocphi: newHocphi
-  };
-  editingIndex = -1;
-  renderTable(document.getElementById("nameInput").value.trim());
-}
+      if (!newName || isNaN(newAge) || !newClass || !newAddress) {
+        alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
+        return;
+      }
 
-function deleteRow(index) {
-  if (confirm("Bạn có chắc muốn xóa học sinh này?")) {
-    data.splice(index, 1);
-    renderTable(document.getElementById("nameInput").value.trim());
-  }
-}
+      data[index] = {
+        name: newName,
+        age: newAge,
+        class: newClass,
+        address: newAddress,
+        hocphi: newHocphi
+      };
+      editingIndex = -1;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
 
-function showAddForm() {
-  if (!addingNew) {
-    addingNew = true;
-    editingIndex = -1;
-    renderTable(document.getElementById("nameInput").value.trim());
-  }
-}
+    function deleteRow(index) {
+      if (confirm("Bạn có chắc muốn xóa học sinh này?")) {
+        data.splice(index, 1);
+        renderTable(document.getElementById("nameInput").value.trim());
+      }
+    }
 
-function addNewRow() {
-  const name = document.getElementById("addName").value.trim();
-  const age = parseInt(document.getElementById("addAge").value);
-  const className = document.getElementById("addClass").value.trim();
-  const address = document.getElementById("addAddress").value.trim();
-  const hocphi = document.getElementById("addHocphi").value;
+    function showAddForm() {
+      if (!addingNew) {
+        addingNew = true;
+        editingIndex = -1;
+        renderTable(document.getElementById("nameInput").value.trim());
+      }
+    }
 
-  if (!name || isNaN(age) || !className || !address) {
-    alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
-    return;
-  }
+    function addNewRow() {
+      const name = document.getElementById("addName").value.trim();
+      const age = parseInt(document.getElementById("addAge").value);
+      const className = document.getElementById("addClass").value.trim();
+      const address = document.getElementById("addAddress").value.trim();
+      const hocphi = document.getElementById("addHocphi").value;
 
-  data.push({ name, age, class: className, address, hocphi });
-  addingNew = false;
-  renderTable(document.getElementById("nameInput").value.trim());
-}
+      if (!name || isNaN(age) || !className || !address) {
+        alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
+        return;
+      }
 
-function cancelAdd() {
-  addingNew = false;
-  renderTable(document.getElementById("nameInput").value.trim());
-}
+      data.push({ name, age, class: className, address, hocphi });
+      addingNew = false;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
 
-// Khởi tạo bảng lần đầu
-renderTable();
+    function cancelAdd() {
+      addingNew = false;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
+
+    // Khởi tạo bảng lần đầu
+    renderTable();
+  </script>
+</body>
+</html>
