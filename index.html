@@ -75,12 +75,12 @@
       id="nameInput"
       placeholder="Nhập tên để tìm hoặc thêm..."
       aria-label="Tên học sinh"
+      oninput="filterTable()"
     />
-    <button type="button" onclick="searchInfo()">Tìm</button>
     <button type="button" onclick="showAddForm()">Thêm mới</button>
   </div>
 
-  <table id="infoTable" style="display:none;" aria-live="polite" aria-label="Bảng thông tin học sinh">
+  <table id="infoTable" aria-live="polite" aria-label="Bảng thông tin học sinh">
     <thead>
       <tr>
         <th>Tên</th>
@@ -91,7 +91,9 @@
         <th>Hành động</th>
       </tr>
     </thead>
-    <tbody id="tableBody"></tbody>
+    <tbody id="tableBody">
+      <!-- Dữ liệu sẽ hiện ra ở đây -->
+    </tbody>
   </table>
 
   <script>
@@ -101,62 +103,100 @@
       { name: "6.2-01 Khang", age: 12, class: "6.2", address: "THCS Nguyễn Du", hocphi: "Có" }
     ];
 
-    let currentIndex = -1;
+    let editingIndex = -1;
+    let addingNew = false;
 
-    function searchInfo() {
-      const input = document.getElementById("nameInput").value.trim();
-      const index = data.findIndex(person => person.name.toLowerCase() === input.toLowerCase());
-      const table = document.getElementById("infoTable");
-      const body = document.getElementById("tableBody");
+    function renderTable(filter = "") {
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
 
-      if (index !== -1) {
-        currentIndex = index;
-        const person = data[index];
-        table.style.display = "table";
-        body.innerHTML = `
+      const filteredData = data.filter(person =>
+        person.name.toLowerCase().includes(filter.toLowerCase())
+      );
+
+      if(filteredData.length === 0){
+        tbody.innerHTML = `<tr><td colspan="6">Không có dữ liệu phù hợp</td></tr>`;
+        return;
+      }
+
+      filteredData.forEach((person, index) => {
+        if(editingIndex === index && !addingNew){
+          tbody.innerHTML += `
+            <tr>
+              <td><input id="editName" value="${person.name}" /></td>
+              <td><input id="editAge" type="number" value="${person.age}" /></td>
+              <td><input id="editClass" value="${person.class}" /></td>
+              <td><input id="editAddress" value="${person.address}" /></td>
+              <td>
+                <select id="editHocphi">
+                  <option value="Có" ${person.hocphi === "Có" ? "selected" : ""}>Có</option>
+                  <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
+                </select>
+              </td>
+              <td>
+                <button onclick="saveEdit(${index})">Lưu</button>
+                <button onclick="cancelEdit()">Hủy</button>
+              </td>
+            </tr>
+          `;
+        } else {
+          tbody.innerHTML += `
+            <tr>
+              <td>${person.name}</td>
+              <td>${person.age}</td>
+              <td>${person.class}</td>
+              <td>${person.address}</td>
+              <td>${person.hocphi}</td>
+              <td>
+                <button onclick="startEdit(${index})">Chỉnh sửa</button>
+                <button onclick="deleteRow(${index})">Xóa</button>
+              </td>
+            </tr>
+          `;
+        }
+      });
+
+      if(addingNew){
+        tbody.innerHTML += `
           <tr>
-            <td>${person.name}</td>
-            <td>${person.age}</td>
-            <td>${person.class}</td>
-            <td>${person.address}</td>
-            <td>${person.hocphi}</td>
+            <td><input id="addName" placeholder="Tên" /></td>
+            <td><input id="addAge" type="number" placeholder="Tuổi" /></td>
+            <td><input id="addClass" placeholder="Lớp" /></td>
+            <td><input id="addAddress" placeholder="Trường" /></td>
             <td>
-              <button onclick="editRow()">Chỉnh sửa</button>
-              <button onclick="deleteRow()">Xóa</button>
+              <select id="addHocphi">
+                <option value="Có">Có</option>
+                <option value="Không">Không</option>
+              </select>
+            </td>
+            <td>
+              <button onclick="addNewRow()">Thêm</button>
+              <button onclick="cancelAdd()">Hủy</button>
             </td>
           </tr>
         `;
-      } else {
-        table.style.display = "none";
-        body.innerHTML = "";
-        alert("Không tìm thấy người này.");
       }
     }
 
-    function editRow() {
-      const person = data[currentIndex];
-      const body = document.getElementById("tableBody");
-      body.innerHTML = `
-        <tr>
-          <td><input id="editName" value="${person.name}" /></td>
-          <td><input id="editAge" type="number" value="${person.age}" /></td>
-          <td><input id="editClass" value="${person.class}" /></td>
-          <td><input id="editAddress" value="${person.address}" /></td>
-          <td>
-            <select id="editHocphi">
-              <option value="Có" ${person.hocphi === "Có" ? "selected" : ""}>Có</option>
-              <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
-            </select>
-          </td>
-          <td>
-            <button onclick="saveRow()">Lưu</button>
-            <button onclick="cancelEdit()">Hủy</button>
-          </td>
-        </tr>
-      `;
+    function filterTable() {
+      const filterText = document.getElementById("nameInput").value.trim();
+      editingIndex = -1;
+      addingNew = false;
+      renderTable(filterText);
     }
 
-    function saveRow() {
+    function startEdit(index) {
+      editingIndex = index;
+      addingNew = false;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
+
+    function cancelEdit() {
+      editingIndex = -1;
+      renderTable(document.getElementById("nameInput").value.trim());
+    }
+
+    function saveEdit(index) {
       const newName = document.getElementById("editName").value.trim();
       const newAge = parseInt(document.getElementById("editAge").value);
       const newClass = document.getElementById("editClass").value.trim();
@@ -168,56 +208,31 @@
         return;
       }
 
-      data[currentIndex] = {
+      data[index] = {
         name: newName,
         age: newAge,
         class: newClass,
         address: newAddress,
         hocphi: newHocphi
       };
-
-      searchInfo();
+      editingIndex = -1;
+      renderTable(document.getElementById("nameInput").value.trim());
     }
 
-    function cancelEdit() {
-      searchInfo();
-    }
-
-    function deleteRow() {
+    function deleteRow(index) {
       if (confirm("Bạn có chắc chắn muốn xóa người này không?")) {
-        data.splice(currentIndex, 1);
-        currentIndex = -1;
-        document.getElementById("infoTable").style.display = "none";
-        document.getElementById("tableBody").innerHTML = "";
+        data.splice(index, 1);
+        renderTable(document.getElementById("nameInput").value.trim());
       }
     }
 
     function showAddForm() {
-      currentIndex = -1;
-      const table = document.getElementById("infoTable");
-      const body = document.getElementById("tableBody");
-      table.style.display = "table";
-      body.innerHTML = `
-        <tr>
-          <td><input id="addName" placeholder="Tên"/></td>
-          <td><input id="addAge" type="number" placeholder="Tuổi"/></td>
-          <td><input id="addClass" placeholder="Lớp"/></td>
-          <td><input id="addAddress" placeholder="Trường"/></td>
-          <td>
-            <select id="addHocphi">
-              <option value="Có">Có</option>
-              <option value="Không">Không</option>
-            </select>
-          </td>
-          <td>
-            <button onclick="addRow()">Thêm</button>
-            <button onclick="cancelEdit()">Hủy</button>
-          </td>
-        </tr>
-      `;
+      addingNew = true;
+      editingIndex = -1;
+      renderTable(document.getElementById("nameInput").value.trim());
     }
 
-    function addRow() {
+    function addNewRow() {
       const newName = document.getElementById("addName").value.trim();
       const newAge = parseInt(document.getElementById("addAge").value);
       const newClass = document.getElementById("addClass").value.trim();
@@ -237,9 +252,13 @@
         hocphi: newHocphi
       });
 
-      document.getElementById("nameInput").value = newName;
-      searchInfo();
+      addingNew = false;
+      document.getElementById("nameInput").value = "";
+      renderTable();
     }
+
+    // Hiển thị bảng khi mở trang
+    renderTable();
   </script>
 </body>
 </html>
