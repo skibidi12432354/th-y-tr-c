@@ -1,17 +1,86 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Bảng Thông Tin Học Sinh</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #2a4d69;
+    }
+
+    input, select {
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+    }
+
+    button {
+      padding: 8px 14px;
+      font-size: 16px;
+      background-color: #2a9d8f;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+
+    button:hover {
+      background-color: #21867a;
+    }
+
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 95%;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+
+    td input, td select {
+      width: 90%;
+      padding: 6px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+      box-sizing: border-box;
+    }
+  </style>
 </head>
 <body>
   <h2>Bảng Thông Tin Học Sinh</h2>
 
-  <input type="text" id="nameInput" placeholder="Nhập tên (ví dụ: 6.1-01 Anh)...">
-  <button onclick="searchInfo()">Tìm</button>
+  <div>
+    <input
+      type="text"
+      id="nameInput"
+      placeholder="Nhập tên để tìm hoặc thêm..."
+      aria-label="Tên học sinh"
+    />
+    <button type="button" onclick="searchInfo()">Tìm</button>
+    <button type="button" onclick="showAddForm()">Thêm mới</button>
+  </div>
 
-  <table id="infoTable" style="display: none;">
+  <table id="infoTable" style="display:none;" aria-live="polite" aria-label="Bảng thông tin học sinh">
     <thead>
       <tr>
         <th>Tên</th>
@@ -22,9 +91,7 @@
         <th>Hành động</th>
       </tr>
     </thead>
-    <tbody id="tableBody">
-      <!-- Dữ liệu sẽ hiển thị tại đây -->
-    </tbody>
+    <tbody id="tableBody"></tbody>
   </table>
 
   <script>
@@ -53,7 +120,10 @@
             <td>${person.class}</td>
             <td>${person.address}</td>
             <td>${person.hocphi}</td>
-            <td><button onclick="editRow()">Chỉnh sửa</button></td>
+            <td>
+              <button onclick="editRow()">Chỉnh sửa</button>
+              <button onclick="deleteRow()">Xóa</button>
+            </td>
           </tr>
         `;
       } else {
@@ -78,17 +148,25 @@
               <option value="Không" ${person.hocphi === "Không" ? "selected" : ""}>Không</option>
             </select>
           </td>
-          <td><button onclick="saveRow()">Lưu</button></td>
+          <td>
+            <button onclick="saveRow()">Lưu</button>
+            <button onclick="cancelEdit()">Hủy</button>
+          </td>
         </tr>
       `;
     }
 
     function saveRow() {
-      const newName = document.getElementById("editName").value;
+      const newName = document.getElementById("editName").value.trim();
       const newAge = parseInt(document.getElementById("editAge").value);
-      const newClass = document.getElementById("editClass").value;
-      const newAddress = document.getElementById("editAddress").value;
+      const newClass = document.getElementById("editClass").value.trim();
+      const newAddress = document.getElementById("editAddress").value.trim();
       const newHocphi = document.getElementById("editHocphi").value;
+
+      if (!newName || isNaN(newAge) || !newClass || !newAddress) {
+        alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
+        return;
+      }
 
       data[currentIndex] = {
         name: newName,
@@ -98,7 +176,69 @@
         hocphi: newHocphi
       };
 
-      searchInfo(); // cập nhật lại bảng sau khi lưu
+      searchInfo();
+    }
+
+    function cancelEdit() {
+      searchInfo();
+    }
+
+    function deleteRow() {
+      if (confirm("Bạn có chắc chắn muốn xóa người này không?")) {
+        data.splice(currentIndex, 1);
+        currentIndex = -1;
+        document.getElementById("infoTable").style.display = "none";
+        document.getElementById("tableBody").innerHTML = "";
+      }
+    }
+
+    function showAddForm() {
+      currentIndex = -1;
+      const table = document.getElementById("infoTable");
+      const body = document.getElementById("tableBody");
+      table.style.display = "table";
+      body.innerHTML = `
+        <tr>
+          <td><input id="addName" placeholder="Tên"/></td>
+          <td><input id="addAge" type="number" placeholder="Tuổi"/></td>
+          <td><input id="addClass" placeholder="Lớp"/></td>
+          <td><input id="addAddress" placeholder="Trường"/></td>
+          <td>
+            <select id="addHocphi">
+              <option value="Có">Có</option>
+              <option value="Không">Không</option>
+            </select>
+          </td>
+          <td>
+            <button onclick="addRow()">Thêm</button>
+            <button onclick="cancelEdit()">Hủy</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    function addRow() {
+      const newName = document.getElementById("addName").value.trim();
+      const newAge = parseInt(document.getElementById("addAge").value);
+      const newClass = document.getElementById("addClass").value.trim();
+      const newAddress = document.getElementById("addAddress").value.trim();
+      const newHocphi = document.getElementById("addHocphi").value;
+
+      if (!newName || isNaN(newAge) || !newClass || !newAddress) {
+        alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
+        return;
+      }
+
+      data.push({
+        name: newName,
+        age: newAge,
+        class: newClass,
+        address: newAddress,
+        hocphi: newHocphi
+      });
+
+      document.getElementById("nameInput").value = newName;
+      searchInfo();
     }
   </script>
 </body>
