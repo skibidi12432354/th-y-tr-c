@@ -32,6 +32,14 @@
       border-radius: 4px;
       cursor: pointer;
       margin-left: 5px;
+      min-width: 90px; /* nút dài hơn */
+      box-sizing: border-box;
+      display: inline-block;
+    }
+
+    /* Nút đầu tiên không có margin-left */
+    button:first-child {
+      margin-left: 0;
     }
 
     button:hover {
@@ -58,6 +66,7 @@
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
+      vertical-align: middle; /* canh giữa theo chiều dọc */
     }
 
     th {
@@ -78,6 +87,14 @@
       font-weight: bold;
       font-size: 1.2em;
       margin-bottom: 10px;
+    }
+
+    /* Để các nút trong cell nằm trên cùng một dòng và không chồng chéo */
+    td > button {
+      margin-left: 10px;
+    }
+    td > button:first-child {
+      margin-left: 0;
     }
   </style>
 </head>
