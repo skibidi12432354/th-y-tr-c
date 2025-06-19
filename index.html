@@ -109,19 +109,18 @@
       oninput="filterTable()"
     />
     <button type="button" onclick="showAddForm()">Thêm mới</button>
+    <button onclick="exportToHTML()">Lưu thay đổi</button>
   </div>
 
   <div class="tables-wrapper" id="tablesContainer"></div>
 
   <script>
-    // ✅ Dữ liệu sẽ được lưu trong localStorage
     let data = JSON.parse(localStorage.getItem("studentData")) || [
       { name: "6.1-01 Anh", age: 11, class: "6.1", address: "THCS Nguyễn Trãi", hocphi: "Có" },
       { name: "6.1-02 An", age: 11, class: "6.1", address: "THCS Hùng Vương", hocphi: "Không" },
       { name: "6.2-01 Khang", age: 12, class: "6.2", address: "THCS Nguyễn Du", hocphi: "Có" },
       { name: "6.3-01 Hải", age: 12, class: "6.3", address: "THCS Nguyễn Huệ", hocphi: "Không" }
     ];
-
     let editingIndex = -1;
     let addingNew = false;
 
@@ -152,7 +151,6 @@
       }
 
       const grouped = groupByClass(filteredData);
-
       for (const className in grouped) {
         container.innerHTML += `
           <div>
@@ -169,7 +167,7 @@
                 </tr>
               </thead>
               <tbody>
-                ${renderRows(grouped[className], className)}
+                ${renderRows(grouped[className])}
               </tbody>
             </table>
           </div>
@@ -177,7 +175,7 @@
       }
     }
 
-    function renderRows(personList, className) {
+    function renderRows(personList) {
       let rows = "";
       personList.forEach(person => {
         const idx = data.findIndex(p => p.name === person.name);
@@ -217,27 +215,6 @@
         }
       });
 
-      if (addingNew && personList === Object.values(groupByClass(data)).flat()) {
-        rows += `
-          <tr>
-            <td><input id="addName" placeholder="Tên" /></td>
-            <td><input id="addAge" type="number" placeholder="Tuổi" /></td>
-            <td><input id="addClass" placeholder="Lớp" /></td>
-            <td><input id="addAddress" placeholder="Trường" /></td>
-            <td>
-              <select id="addHocphi">
-                <option value="Có">Có</option>
-                <option value="Không">Không</option>
-              </select>
-            </td>
-            <td>
-              <button onclick="addNewRow()">Thêm</button>
-              <button onclick="cancelAdd()">Hủy</button>
-            </td>
-          </tr>
-        `;
-      }
-
       return rows;
     }
 
@@ -272,7 +249,7 @@
       }
 
       data[index] = { name: newName, age: newAge, class: newClass, address: newAddress, hocphi: newHocphi };
-      saveToLocal(); // ✅ lưu lại sau khi sửa
+      saveToLocal();
       editingIndex = -1;
       renderTable(document.getElementById("nameInput").value.trim());
     }
@@ -280,7 +257,7 @@
     function deleteRow(index) {
       if (confirm("Bạn có chắc muốn xóa học sinh này?")) {
         data.splice(index, 1);
-        saveToLocal(); // ✅ lưu sau khi xóa
+        saveToLocal();
         renderTable(document.getElementById("nameInput").value.trim());
       }
     }
@@ -306,7 +283,7 @@
       }
 
       data.push({ name, age, class: className, address, hocphi });
-      saveToLocal(); // ✅ lưu sau khi thêm
+      saveToLocal();
       addingNew = false;
       renderTable(document.getElementById("nameInput").value.trim());
     }
@@ -316,7 +293,17 @@
       renderTable(document.getElementById("nameInput").value.trim());
     }
 
-    // ✅ Khởi tạo bảng lần đầu
+    function exportToHTML() {
+      const htmlContent = document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "du_lieu_hoc_sinh.html";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
     renderTable();
   </script>
 </body>
