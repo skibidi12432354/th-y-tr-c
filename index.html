@@ -82,6 +82,13 @@
       font-size: 1.2em;
       margin-bottom: 10px;
     }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 <body>
@@ -168,8 +175,10 @@
                 </select>
               </td>
               <td>
-                <button onclick="saveEdit(${idx})">Lưu</button>
-                <button onclick="cancelEdit()">Hủy</button>
+                <div class="action-buttons">
+                  <button onclick="saveEdit(${idx})">Lưu</button>
+                  <button onclick="cancelEdit()">Hủy</button>
+                </div>
               </td>
             </tr>
           `;
@@ -182,8 +191,10 @@
               <td>${person.address}</td>
               <td>${person.hocphi}</td>
               <td>
-                <button onclick="startEdit(${idx})">Chỉnh sửa</button>
-                <button onclick="deleteRow(${idx})">Xóa</button>
+                <div class="action-buttons">
+                  <button onclick="startEdit(${idx})">Chỉnh sửa</button>
+                  <button onclick="deleteRow(${idx})">Xóa</button>
+                </div>
               </td>
             </tr>
           `;
@@ -204,8 +215,10 @@
               </select>
             </td>
             <td>
-              <button onclick="addNewRow()">Thêm</button>
-              <button onclick="cancelAdd()">Hủy</button>
+              <div class="action-buttons">
+                <button onclick="addNewRow()">Thêm</button>
+                <button onclick="cancelAdd()">Hủy</button>
+              </div>
             </td>
           </tr>
         `;
