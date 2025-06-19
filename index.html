@@ -31,14 +31,10 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      margin-left: 5px; 
+      margin: 5px 2px;
       min-width: 90px;
       box-sizing: border-box;
       display: inline-block;
-    }
-
-    button:first-child {
-      margin-left: 0;
     }
 
     button:hover {
@@ -50,15 +46,14 @@
       flex-direction: column;
       gap: 20px;
       margin-top: 20px;
+      align-items: center;
     }
 
     table {
       border-collapse: collapse;
-      width: 1000%;
-      max-width: 600px;
+      width: 90%;
       background-color: white;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin: 0 auto;
     }
 
     th, td {
@@ -85,42 +80,33 @@
       color: #2a4d69;
       font-weight: bold;
       font-size: 1.2em;
-      margin-bottom: 100px;
+      margin-bottom: 10px;
     }
 
-    td > button {
-      margin-left: 10px;
-    }
-
-    td > button:first-child {
-      margin-left: 0;
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: nowrap;
     }
   </style>
 </head>
 <body>
   <h2>Bảng Thông Tin Học Sinh</h2>
-
   <div>
-    <input
-      type="text"
-      id="nameInput"
-      placeholder="Nhập tên để tìm hoặc thêm..."
-      aria-label="Tên học sinh"
-      oninput="filterTable()"
-    />
-    <button type="button" onclick="showAddForm()">Thêm mới</button>
-    <button onclick="exportToHTML()">Lưu thay đổi</button>
+    <input id="nameInput" placeholder="Nhập tên để tìm hoặc thêm" oninput="filterTable()" />
+    <button onclick="showAddForm()">Thêm mới</button>
+    <button onclick="downloadData()">Lưu thay đổi</button>
   </div>
-
   <div class="tables-wrapper" id="tablesContainer"></div>
-
   <script>
     let data = JSON.parse(localStorage.getItem("studentData")) || [
       { name: "6.1-01 Anh", age: 11, class: "6.1", address: "THCS Nguyễn Trãi", hocphi: "Có" },
       { name: "6.1-02 An", age: 11, class: "6.1", address: "THCS Hùng Vương", hocphi: "Không" },
-      { name: "6.2-01 Khang", age: 12, class: "6.2", address: "THCS Nguyễn Du", hocphi: "Có" },
+      { name: "6.2-01 Khang", age: 12, class: "6.2", address: "THCS Nguyễn Du", hocphi: "Không" },
       { name: "6.3-01 Hải", age: 12, class: "6.3", address: "THCS Nguyễn Huệ", hocphi: "Không" }
     ];
+
     let editingIndex = -1;
     let addingNew = false;
 
@@ -155,7 +141,7 @@
         container.innerHTML += `
           <div>
             <div class="group-title">Lớp ${className}</div>
-            <table aria-label="Bảng lớp ${className}">
+            <table>
               <thead>
                 <tr>
                   <th>Tên</th>
@@ -193,8 +179,10 @@
                 </select>
               </td>
               <td>
-                <button onclick="saveEdit(${idx})">Lưu</button>
-                <button onclick="cancelEdit()">Hủy</button>
+                <div class="action-buttons">
+                  <button onclick="saveEdit(${idx})">Lưu</button>
+                  <button onclick="cancelEdit()">Hủy</button>
+                </div>
               </td>
             </tr>
           `;
@@ -207,14 +195,15 @@
               <td>${person.address}</td>
               <td>${person.hocphi}</td>
               <td>
-                <button onclick="startEdit(${idx})">Chỉnh sửa</button>
-                <button onclick="deleteRow(${idx})">Xóa</button>
+                <div class="action-buttons">
+                  <button onclick="startEdit(${idx})">Chỉnh sửa</button>
+                  <button onclick="deleteRow(${idx})">Xóa</button>
+                </div>
               </td>
             </tr>
           `;
         }
       });
-
       return rows;
     }
 
@@ -242,12 +231,10 @@
       const newClass = document.getElementById("editClass").value.trim();
       const newAddress = document.getElementById("editAddress").value.trim();
       const newHocphi = document.getElementById("editHocphi").value;
-
       if (!newName || isNaN(newAge) || !newClass || !newAddress) {
         alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
         return;
       }
-
       data[index] = { name: newName, age: newAge, class: newClass, address: newAddress, hocphi: newHocphi };
       saveToLocal();
       editingIndex = -1;
@@ -270,30 +257,7 @@
       }
     }
 
-    function addNewRow() {
-      const name = document.getElementById("addName").value.trim();
-      const age = parseInt(document.getElementById("addAge").value);
-      const className = document.getElementById("addClass").value.trim();
-      const address = document.getElementById("addAddress").value.trim();
-      const hocphi = document.getElementById("addHocphi").value;
-
-      if (!name || isNaN(age) || !className || !address) {
-        alert("Vui lòng điền đầy đủ thông tin hợp lệ.");
-        return;
-      }
-
-      data.push({ name, age, class: className, address, hocphi });
-      saveToLocal();
-      addingNew = false;
-      renderTable(document.getElementById("nameInput").value.trim());
-    }
-
-    function cancelAdd() {
-      addingNew = false;
-      renderTable(document.getElementById("nameInput").value.trim());
-    }
-
-    function exportToHTML() {
+    function downloadData() {
       const htmlContent = document.documentElement.outerHTML;
       const blob = new Blob([htmlContent], { type: "text/html" });
       const link = document.createElement("a");
